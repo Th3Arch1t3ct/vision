@@ -1,0 +1,42 @@
+body {
+    background-color: black;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+p { 
+    color: red;
+}
+
+#soul {
+    color: red;
+}
+
+#simple {
+    color: white;
+}
+
+li {
+    color: red;
+}
+
+h1 {
+    color: red;
+}
+
+h2 {
+    color: white;
+}
+
+h3 {
+    color: white;
+}
+
+#what {
+    color: red;
+}
+
+#signature {    
+    color: red;
+}
