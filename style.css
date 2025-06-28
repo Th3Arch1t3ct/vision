@@ -40,3 +40,27 @@ h3 {
 #signature {    
     color: red;
 }
+
+/* Responsive image styling */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 20px 0;
+}
+
+/* Desktop styling for marcel images */
+@media (min-width: 769px) {
+    img[src*="marcel1.png"] {
+        width: 45%;
+        height: auto;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    img[src*="marcel1.png"] {
+        width: 100% !important;
+        height: auto !important;
+    }
+}
