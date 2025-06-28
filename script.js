@@ -44,11 +44,11 @@ class PopupWindow {
             },
             'purpose': {
                 title: 'Purpose',
-                url: '/purpose'
+                url: '/vision/purpose'
             },
             'den': {
                 title: 'Den',
-                url: '/den'
+                url: '/vision/den'
             }
         };
         
@@ -153,17 +153,6 @@ class PopupWindow {
         titleBar.addEventListener('mousedown', (e) => {
             this.startDragging(e);
         });
-        
-        // Touch support for mobile
-        titleBar.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            this.startDragging({
-                clientX: touch.clientX,
-                clientY: touch.clientY,
-                preventDefault: () => e.preventDefault()
-            });
-        }, { passive: false });
     }
     
     startDragging(e) {
@@ -171,7 +160,7 @@ class PopupWindow {
         e.stopPropagation();
         
         this.isDragging = true;
-        this.dragStartPosition = { ...this.position };
+        this.dragStartPosition = { x: this.position.x, y: this.position.y };
         this.initialMousePosition = { x: e.clientX, y: e.clientY };
         this.currentTransform = { x: 0, y: 0 };
         
@@ -186,18 +175,20 @@ class PopupWindow {
         
         console.log('Started dragging');
         
+        // Bind event handlers
+        this.boundMouseMove = this.handleMouseMove.bind(this);
+        this.boundMouseUp = this.handleMouseUp.bind(this);
+        
         // Use passive: false for better performance and preventDefault capability
-        document.addEventListener('mousemove', this.handleMouseMove, { passive: false });
-        document.addEventListener('mouseup', this.handleMouseUp, { passive: false });
-        document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-        document.addEventListener('touchend', this.handleMouseUp, { passive: false });
+        document.addEventListener('mousemove', this.boundMouseMove, { passive: false });
+        document.addEventListener('mouseup', this.boundMouseUp, { passive: false });
         
         // Prevent text selection during drag
         document.body.style.userSelect = 'none';
         document.body.style.webkitUserSelect = 'none';
     }
     
-    handleMouseMove = (e) => {
+    handleMouseMove(e) {
         if (!this.isDragging) return;
         
         e.preventDefault();
@@ -209,21 +200,6 @@ class PopupWindow {
         
         this.animationFrame = requestAnimationFrame(() => {
             this.updatePosition(e.clientX, e.clientY);
-        });
-    }
-    
-    handleTouchMove = (e) => {
-        if (!this.isDragging) return;
-        
-        e.preventDefault();
-        const touch = e.touches[0];
-        
-        if (this.animationFrame) {
-            cancelAnimationFrame(this.animationFrame);
-        }
-        
-        this.animationFrame = requestAnimationFrame(() => {
-            this.updatePosition(touch.clientX, touch.clientY);
         });
     }
     
@@ -240,7 +216,7 @@ class PopupWindow {
         popupWindow.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
     }
     
-    handleMouseUp = (e) => {
+    handleMouseUp(e) {
         if (!this.isDragging) return;
         
         // Cancel any pending animation frame
@@ -249,11 +225,8 @@ class PopupWindow {
             this.animationFrame = null;
         }
         
-        const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || this.initialMousePosition.x;
-        const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY) || this.initialMousePosition.y;
-        
-        const deltaX = clientX - this.initialMousePosition.x;
-        const deltaY = clientY - this.initialMousePosition.y;
+        const deltaX = e.clientX - this.initialMousePosition.x;
+        const deltaY = e.clientY - this.initialMousePosition.y;
         
         // Update final position
         this.position = {
@@ -278,10 +251,8 @@ class PopupWindow {
         this.isDragging = false;
         
         // Clean up event listeners
-        document.removeEventListener('mousemove', this.handleMouseMove);
-        document.removeEventListener('mouseup', this.handleMouseUp);
-        document.removeEventListener('touchmove', this.handleTouchMove);
-        document.removeEventListener('touchend', this.handleMouseUp);
+        document.removeEventListener('mousemove', this.boundMouseMove);
+        document.removeEventListener('mouseup', this.boundMouseUp);
         
         // Restore text selection
         document.body.style.userSelect = '';
@@ -300,10 +271,8 @@ class PopupWindow {
         
         // Clean up event listeners if still dragging
         if (this.isDragging) {
-            document.removeEventListener('mousemove', this.handleMouseMove);
-            document.removeEventListener('mouseup', this.handleMouseUp);
-            document.removeEventListener('touchmove', this.handleTouchMove);
-            document.removeEventListener('touchend', this.handleMouseUp);
+            document.removeEventListener('mousemove', this.boundMouseMove);
+            document.removeEventListener('mouseup', this.boundMouseUp);
             
             document.body.style.userSelect = '';
             document.body.style.webkitUserSelect = '';
@@ -318,9 +287,30 @@ class PopupWindow {
     }
 }
 
+// Function to detect mobile devices
+function isMobileDevice() {
+    return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Function to get URL for mobile redirect
+function getMobileUrl(popupType) {
+    const configs = {
+        'gilberto': 'https://gilbertoramiro.com',
+        'wholesomesound': 'https://wholesomesound.com',
+        'folder': 'https://wholesomesounds.com',
+        'purpose': '/vision/purpose',
+        'den': '/vision/den'
+    };
+    
+    return configs[popupType] || '/';
+}
+
 // Initialize popup functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, setting up popup functionality');
+    
+    const isMobile = isMobileDevice();
+    console.log('Is mobile device:', isMobile);
     
     let currentPopup = null;
     
@@ -332,17 +322,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Setting up link ${index}:`, link.getAttribute('data-popup-type'));
         
         link.addEventListener('click', (e) => {
+            const popupType = link.getAttribute('data-popup-type');
+            
+            if (isMobile) {
+                // On mobile: redirect to the URL in a new tab
+                console.log('Mobile device detected, redirecting to:', popupType);
+                const url = getMobileUrl(popupType);
+                window.open(url, '_blank');
+                return; // Don't prevent default, let it open normally
+            }
+            
+            // On desktop: show popup
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('Link clicked:', link.getAttribute('data-popup-type'));
+            console.log('Desktop device, showing popup for:', popupType);
             
             // Close existing popup if any
             if (currentPopup) {
                 currentPopup.close();
             }
-            
-            const popupType = link.getAttribute('data-popup-type');
             
             currentPopup = new PopupWindow(popupType, () => {
                 currentPopup = null;
@@ -351,12 +350,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Close popup when clicking outside (optional)
+    // Close popup when clicking outside (desktop only)
     document.addEventListener('click', (e) => {
-        if (currentPopup && 
+        if (!isMobile && currentPopup && 
             !e.target.closest('.popup-window') && 
             !e.target.closest('[data-popup-type]')) {
             console.log('Clicked outside, closing popup');
+            currentPopup.close();
+        }
+    });
+    
+    // Handle window resize to detect mobile/desktop changes
+    window.addEventListener('resize', () => {
+        const newIsMobile = isMobileDevice();
+        if (newIsMobile !== isMobile && currentPopup) {
+            // If device type changed and popup is open, close it
             currentPopup.close();
         }
     });
