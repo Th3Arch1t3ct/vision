@@ -41,14 +41,6 @@ class PopupWindow {
             'folder': {
                 title: 'HQ',
                 url: 'https://wholesomesounds.com'
-            },
-            'purpose': {
-                title: 'Purpose',
-                url: '/vision/purpose'
-            },
-            'den': {
-                title: 'Den',
-                url: '/vision/den'
             }
         };
         
@@ -297,9 +289,7 @@ function getMobileUrl(popupType) {
     const configs = {
         'gilberto': 'https://gilbertoramiro.com',
         'wholesomesound': 'https://wholesomesound.com',
-        'folder': 'https://wholesomesounds.com',
-        'purpose': '/vision/purpose',
-        'den': '/vision/den'
+        'folder': 'https://wholesomesounds.com'
     };
     
     return configs[popupType] || '/';
